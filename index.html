@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema Oficina</title>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f4; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        h1 { color: #318CE7; text-transform: uppercase; margin-bottom: 5px; }
+        .linha-franca { width: 100px; height: 5px; background: #ED2939; margin-bottom: 30px; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; width: 100%; }
+        .card { background: white; padding: 20px; border-radius: 10px; width: 350px; border-top: 10px solid #318CE7; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card-red { border-top-color: #ED2939; }
+        input, select { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; background: #318CE7; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-red { background: #ED2939; }
+        .msg { display: none; background: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 15px; width: 100%; max-width: 720px; text-align: center; }
+        table { width: 100%; max-width: 800px; background: white; border-collapse: collapse; margin-top: 20px; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        th { background: #318CE7; color: white; padding: 12px; }
+        td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        .excluir { color: #ED2939; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body onload="carregarDados()">
+
+    <h1>Oficina Mecanica</h1>
+    <div class="linha-franca"></div>
+
+    <div id="alerta" class="msg">Operação realizada com sucesso!</div>
+
+    <div class="container">
+        <div class="card">
+            <h3 style="color:#318CE7">Novo Cliente</h3>
+            <input type="text" id="nome" placeholder="Nome" oninput="this.value = this.value.replace(/[0-9]/g, '')">
+            <input type="text" id="cpf" placeholder="CPF" maxlength="11" oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+            <button onclick="addCliente()">CADASTRAR DONO</button>
+        </div>
+
+        <div class="card card-red">
+            <h3 style="color:#ED2939">Novo Veículo</h3>
+            <input type="text" id="placa" placeholder="Placa" oninput="this.value = this.value.toUpperCase()">
+            <input type="text" id="modelo" placeholder="Modelo">
+            <select id="selectDono"><option value="">Selecione o Dono...</option></select>
+            <button class="btn-red" onclick="addVeiculo()">CADASTRAR VEÍCULO</button>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr><th>Tipo</th><th>Detalhes</th><th>Vínculo</th><th>Ação</th></tr>
+        </thead>
+        <tbody id="tabelaDados"></tbody>
+    </table>
+
+    <script>
+        let dados = JSON.parse(localStorage.getItem('techFrancaDados')) || [];
+
+        function carregarDados() {
+            const tabela = document.getElementById('tabelaDados');
+            const select = document.getElementById('selectDono');
+            tabela.innerHTML = '';
+            select.innerHTML = '<option value="">Selecione o Dono...</option>';
+
+            dados.forEach((item, index) => {
+                const cor = item.tipo === '🚗 Veículo' ? 'style="background:#fff5f5"' : '';
+                tabela.innerHTML += `<tr ${cor}>
+                    <td>${item.tipo}</td>
+                    <td>${item.detalhe}</td>
+                    <td>${item.vinculo}</td>
+                    <td><span class="excluir" onclick="excluir(${index})">Excluir</span></td>
+                </tr>`;
+                
+                if(item.tipo === '👤 Cliente') {
+                    select.innerHTML += `<option value="${item.detalhe}">${item.detalhe}</option>`;
+                }
+            });
+        }
+
+        function salvar() {
+            localStorage.setItem('techFrancaDados', JSON.stringify(dados));
+            carregarDados();
+            document.getElementById('alerta').style.display = 'block';
+            setTimeout(() => { document.getElementById('alerta').style.display = 'none'; }, 3000);
+        }
+
+        function addCliente() {
+            const nome = document.getElementById('nome').value;
+            const cpf = document.getElementById('cpf').value;
+            if(!nome || !cpf) return alert("Preencha nome e CPF!");
+            dados.push({ tipo: '👤 Cliente', detalhe: nome, vinculo: cpf });
+            document.getElementById('nome').value = ''; document.getElementById('cpf').value = '';
+            salvar();
+        }
+
+        function addVeiculo() {
+            const placa = document.getElementById('placa').value;
+            const modelo = document.getElementById('modelo').value;
+            const dono = document.getElementById('selectDono').value;
+            if(!placa || !modelo || !dono) return alert("Preencha tudo!");
+            dados.push({ tipo: '🚗 Veículo', detalhe: `${modelo} (${placa})`, vinculo: `Dono: ${dono}` });
+            document.getElementById('placa').value = ''; document.getElementById('modelo').value = '';
+            salvar();
+        }
+
+        function excluir(index) {
+            if(confirm("Deseja excluir este item?")) {
+                dados.splice(index, 1);
+                salvar();
+            }
+        }
+    </script>
+</body>
+</html>
